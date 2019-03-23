@@ -1,5 +1,5 @@
+*.dSYM/
 showip
-showip.dSYM/
 server
 client
 listener
