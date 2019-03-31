@@ -29,6 +29,13 @@ make chat
 ./chatserver
 ```
 
+* Transfer files from clients to server
+```
+make files
+./recv_file
+./send_file <hostname> <file/path>
+```
+
 ***
 **References**
 1. [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
