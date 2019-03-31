@@ -1,4 +1,6 @@
 *.dSYM/
+*.txt
+a.out
 showip
 server
 client
@@ -6,3 +8,5 @@ listener
 talker
 select
 chatserver
+send_file
+recv_file
