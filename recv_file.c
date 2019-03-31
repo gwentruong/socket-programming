@@ -32,15 +32,16 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main (void)
 {
-    int sockfd, new_fd;
+
     struct addrinfo hints, *servinfo, *p;
     struct sigaction sa;
     struct sockaddr_storage their_addr;
-    socklen_t sin_size;
+    int sockfd, new_fd;
     int yes = 1;
     int rv;
     char s[INET6_ADDRSTRLEN];
     char filename[MAX_LEN] = { '\0' };
+    socklen_t sin_size;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family   = AF_UNSPEC;
@@ -53,7 +54,7 @@ int main (void)
         return 1;
     }
 
-    // loop through all the results and bind to the first we can
+    // Loop through all the results and bind to the first we can
     for (p = servinfo; p != NULL; p = p->ai_next)
     {
         // Return file descriptor
@@ -133,14 +134,15 @@ int main (void)
             printf("Received filename\n");
 
             FILE *fp = fopen(filename, "wb");
+            ssize_t n;
+            char buf[MAX_LEN] = { '\0' };
+
             if (fp == NULL)
             {
                 perror("Can't open file to write");
                 return -1;
             }
 
-            ssize_t n;
-            char buf[MAX_LEN] = { '\0' };
             while((n = recv(new_fd, buf, MAX_LEN, 0)) > 0)
             {
                 if (n == -1)
@@ -162,7 +164,7 @@ int main (void)
             close(new_fd);
         }
     }
-    
+
     close(sockfd);
     return 0;
 }
