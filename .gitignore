@@ -10,3 +10,4 @@ select
 chatserver
 send_file
 recv_file
+md5sum/md5
