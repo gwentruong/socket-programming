@@ -10,5 +10,5 @@ select
 chatserver
 send_file
 recv_file
-md5sum/md5
-md5sum/md5check
+md5
+md5check
