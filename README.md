@@ -36,6 +36,21 @@ make files
 ./send_file <hostname> <file/path>
 ```
 
+* MD5 hashing
+
+String to hash
+```
+make md5
+./md5 <string-to-hash> [<string> [...] ]
+```
+
+md5sum implementation
+```
+make md5check
+./md5check <file> [<file> [...] ]
+```
+
 ***
 **References**
 1. [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
+2. [Ron Rivest, modified by Jim Kingdon, MD5 implementation, 1997, Cyclic Software](https://opensource.apple.com/source/cvs/cvs-27/cvs/lib/md5.c)
