@@ -27,6 +27,8 @@
 // #include "config.h"
 // #endif
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>	/* for memcpy() */
 #include "md5.h"
 
@@ -268,3 +270,42 @@ void MD5Transform(uint32 buf[4], const unsigned char inraw[64])
 	buf[3] += d;
 }
 #endif
+
+char *md5checksum(char *filename)
+{
+    struct MD5Context context;
+	unsigned char checksum[16];
+    char *sum = malloc(33);
+    FILE *fp  = fopen(filename, "r");
+    char  tmp[2 + 1];
+
+    if (fp == NULL)
+    {
+        printf("File %s can't be opened\n", filename);
+        return NULL;
+    }
+
+    fseek(fp, 0L, SEEK_END);
+    int size = ftell(fp);
+    fseek(fp, 0L, SEEK_SET);
+    char buf[size + 1];
+    memset(buf, 0, sizeof(buf));
+    fread(buf, 1, size, fp);
+
+    MD5Init(&context);
+    MD5Update(&context, (const unsigned char *)buf, strlen(buf));
+    MD5Final(checksum, &context);
+
+    for (int i = 0; i < 16; i++)
+    {
+        snprintf(tmp, sizeof(tmp), "%02x", (unsigned int) checksum[i]);
+        if (i == 0)
+            strcpy(sum, tmp);
+        else
+            strcat(sum, tmp);
+    }
+    sum[33] = '\0';
+
+    fclose(fp);
+    return sum;
+}
