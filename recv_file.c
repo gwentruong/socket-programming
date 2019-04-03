@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include "md5sum/md5.h"
 
 #define PORT "3490"
 #define MAX_LEN 4096
@@ -40,7 +41,6 @@ int main (void)
     int yes = 1;
     int rv;
     char s[INET6_ADDRSTRLEN];
-    char filename[MAX_LEN] = { '\0' };
     socklen_t sin_size;
 
     memset(&hints, 0, sizeof(hints));
@@ -114,6 +114,13 @@ int main (void)
               get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
     printf("server: got connection from %s\n", s);
 
+    FILE *fp;
+    int  size;
+    char filename[MAX_LEN] = { '\0' };
+    char filesize[MAX_LEN] = { '\0' };
+    char send_checksum[33 + 1] = { '\0' };
+    ssize_t n;
+
     while (1)
     {
         sin_size = sizeof(their_addr);
@@ -133,9 +140,17 @@ int main (void)
             }
             printf("Received filename\n");
 
-            FILE *fp = fopen(filename, "wb");
-            ssize_t n;
-            char buf[MAX_LEN] = { '\0' };
+            if (recv(new_fd, filesize, MAX_LEN, 0) == -1)
+            {
+                perror("Can't receive file size");
+                return -1;
+            }
+            size = atoi(filesize);
+            printf("Received file size %d\n", size);
+
+            fp = fopen(filename, "wb");
+            char buf[size];
+            memset(buf, 0, sizeof(buf));
 
             if (fp == NULL)
             {
@@ -143,7 +158,7 @@ int main (void)
                 return -1;
             }
 
-            while((n = recv(new_fd, buf, MAX_LEN, 0)) > 0)
+            if((n = recv(new_fd, buf, sizeof(buf), 0)) > 0)
             {
                 if (n == -1)
                 {
@@ -158,9 +173,24 @@ int main (void)
                     return -1;
                 }
                 printf("File transfered successfully\n");
-                memset(buf, 0, MAX_LEN);
+                memset(buf, 0, sizeof(buf));
             }
             fclose(fp);
+
+            if (recv(new_fd, send_checksum, 33, 0) == -1)
+            {
+                perror("Can't receive file checksum");
+                return -1;
+            }
+
+            char *recv_checksum = md5checksum(filename);
+            printf("recv_checksum %s\nsend_checksum %s\n",
+                    recv_checksum, send_checksum);
+            if (strcmp(send_checksum, recv_checksum) == 0)
+                printf("Received file is not damaged\n");
+            else
+                printf("Received file is damaged\n");
+
             close(new_fd);
         }
     }

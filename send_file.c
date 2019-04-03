@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include "md5sum/md5.h"
 
 #define PORT "3490"
 #define MAX_LEN 4096
@@ -71,9 +72,9 @@ int main(int argc, char** argv)
     FILE *fp            = fopen(argv[2], "r");
     char *filename      = basename(argv[2]);
     char  buf[MAX_LEN]  = { '\0' };
-    char  line[MAX_LEN] = { '\0' };
     char  s[INET6_ADDRSTRLEN];
-    int   n;
+    char  checksum[33] = { '\0' };
+    int   n, size;
 
     // Print the server IP address in readable form
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
@@ -92,20 +93,39 @@ int main(int argc, char** argv)
 
     if (send(sockfd, buf, MAX_LEN, 0) == -1)    // Send filename
     {
-        perror("Can't send the file");
+        perror("Can't send the filename");
         return -1;
     }
     printf("Filename sent!\n");
+    memset(buf, 0, MAX_LEN);
 
-    if (fp == NULL)                     // Open file to read
+    char *check = md5checksum(argv[2]);
+    if (check == NULL)
     {
         perror("Can't open file");
         return -1;
     }
+    else
+        strcpy(checksum, check);
     printf("File can be opened\n");
 
-    // Read the file content to line buf and send the line buf
-    while ((n = fread(line, sizeof(char), MAX_LEN, fp)) > 0)
+    fseek(fp, 0L, SEEK_END);
+    size = ftell(fp);
+    fseek(fp, 0L, SEEK_SET);
+    char file_content[size + 1];
+    memset(file_content, 0, sizeof(file_content));
+    snprintf(buf, MAX_LEN, "%d", size);     // Assign the size of file to buf
+    printf("Size of file %s\n", buf);
+
+    if (send(sockfd, buf, MAX_LEN, 0) == -1)    // Send file size
+    {
+        perror("Can't send the file size");
+        return -1;
+    }
+    printf("File size sent!\n");
+
+    // Read the file content to file_content buf and send the file_content buf
+    if ((n = fread(file_content, sizeof(char), MAX_LEN, fp)) > 0)
     {
         if (ferror(fp))
         {
@@ -113,12 +133,19 @@ int main(int argc, char** argv)
             return -1;
         }
 
-        if (send(sockfd, line, n, 0) == -1)
+        if (send(sockfd, file_content, n, 0) == -1)
         {
             perror("Can't send file\n");
             return -1;
         }
-        memset(line, 0, MAX_LEN);
+
+        if (send(sockfd, checksum, 33, 0) == -1)
+        {
+            perror("Can't send checksum\n");
+            return -1;
+        }
+        memset(file_content, 0, sizeof(file_content));
+        memset(checksum, 0, sizeof(checksum));
     }
 
     fclose(fp);
