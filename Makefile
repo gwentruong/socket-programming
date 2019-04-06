@@ -20,3 +20,6 @@ md5:
 
 md5check:
 	gcc -g -Wall md5sum/md5.c md5sum/main.c -o md5check
+
+http:
+	gcc -g -Wall http.c -o http 
